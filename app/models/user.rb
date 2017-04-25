@@ -27,6 +27,26 @@ class User < ApplicationRecord
     self.followings.include?(other_user)
   end
   
+  has_many :likeusers
+  has_many :likeings, through: :likeusers, source: :like
+  has_many :reverses_of_likeuser, class_name: 'Likeuser', foreign_key: 'like_id'
+  has_many :likers, through: :reverses_of_likeuser, source: :user
+  
+  def like(other_user)
+    unless self == other_user
+      self.likeusers.find_or_create_by(like_id: other_user.id)
+    end
+  end
+
+  def unlike(other_user)
+    likeuser = self.likeusers.find_by(like_id: other_user.id)
+    likeuser.destroy if likeuser
+  end
+
+  def likeing?(other_user)
+    self.likeings.include?(other_user)
+  end
+  
   def feed_microposts
   Micropost.where(user_id: self.following_ids + [self.id])
   end
